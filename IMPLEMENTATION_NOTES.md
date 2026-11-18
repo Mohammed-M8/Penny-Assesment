@@ -4,8 +4,10 @@
 
 <!-- Grouped by task: bugs fixed and features implemented (component + template). -->
 
--
+### Task 1
+The **diff.util.ts** was only checking for the difference in unit price between line items in the baseline list of items and the proposed list of items which led to the change detection test in diff.spec.ts (detects a quantity-only change as changed) failing. *Adding a quantity difference check between baseline item and proposed item fixed the test*
 
+The **cr-detail.components.ts** was only checking if a CR Detail had status PENDING_APPROVAL in the function **canApprove** which was being used to render the Approve Button in CR Details Screen. This led to the test **disables Approve for a read-only viewer on a pending CR** from failing as it allowed non authorized users to see the Approve button. Adding a *&&* check using the **canApprovePolicy** function from **permission.ts** to check whether the Session User has policy to approve led to the successfull hiding of the Approve button for unauthorized users.
 ## 2. Component & state model
 
 <!-- The screens, the view-state each component exposes, and how data flows from the mock API into the
