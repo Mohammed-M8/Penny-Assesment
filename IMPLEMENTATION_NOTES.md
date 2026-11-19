@@ -11,6 +11,15 @@ The **cr-detail.components.ts** was only checking if a CR Detail had status PEND
 
 ### Task 2 
 The status filter in cr-list.component was not applying changes to the loaded CRs as the function **get visibleRows** was returning the full list as it is without filtering based on selected status filter. A simple **.filter** on the loaded rows with the match to the status filter fixed the filtering of the CRs based on status.
+### Task 3
+The approval timeline was sorted chronologically (oldest -> newest) by using a simple **.sort** function on the timeline array's audit **at** field.
+
+Approval of a CR was enabled in the **approve()** function that calls the mock api and passes the user , the id of the CR component and the time at approval. On success, the data is updated.
+
+Rejection of a CR was enabled in the **reject()** function that calls the mock api and passes the user , the id of the CR component and the time at approval and a rejection reason. On success, the data is updated.
+
+Rejection of a CR that is PENDING_APPROVAL is only enabled and approved if there was a **rejection reason** given to the text area using angular's **FormControl** to let it control the enabling of the Reject Button, and provide error through **action_error**. 
+
 
 ## 2. Component & state model
 
@@ -34,22 +43,29 @@ There are 5 view states in the application for all Change Requests namely: 'idle
 
 | Invariant | How / where |
 | --------- | ----------- |
+| Viewer only user cannot see the approve or reject buttons but can read data | approve and rejection buttons rely on canApprove/canReject in cd-detail.component (ts and html) for enable
+| Rejection reason is required | FormControl is added to the button and input area to disable on invalid status / cr-detail.component (ts/html)
+| One organisation's user cannot view other organisation's users | getChangeRequest scopes requests retrieval based on session user's orgCode (cr-api.service.ts/cr-detail.component.ts)
+| CR has to be of status PENDING_APPROVAL for it to be approved or rejected | canApprove/canReject are used to check the status of the CR and is binded to the enabling of the reject and approve buttons (cr-detail.component.html/ts)
 
 ## 4. Testing strategy
 
 <!-- What you tested (component/DOM vs pure) and why; what you deliberately skipped given the budget. -->
 
--
+- for testing if Loading UI shows , the latencyMS in the cr-api.service.ts was increased. **Successfully Showed Loading message**
+- for testing if error paragraph shows, the failNExt was set to true in the cr-api.service.ts. **Successfully showed red error message**
 
 ## 5. Assumptions
 
 <!-- Where the requirements left room for interpretation, the calls you made and why. -->
 
--
+- **Task 3:** I assumed that only users that have approvePolicy permission can reject, therefore i added the same permission check in both **canApprove** and **canReject** functions.
+- I also assumed in **Task 3** that the date stored for approval or rejection timeline is to be stored in ISO string format.
 
 ## 6. Where I used AI
 
--
+- To understand what Angular's Form Control provides out of the box and how i could use it to retrieve the value from rejection reason text area to pass in the **reject()** function as well as validate the input.
+
 
 ## 7. What I'd improve with more time
 
