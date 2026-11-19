@@ -12,13 +12,13 @@ The **cr-detail.components.ts** was only checking if a CR Detail had status PEND
 ### Task 2 
 The status filter in cr-list.component was not applying changes to the loaded CRs as the function **get visibleRows** was returning the full list as it is without filtering based on selected status filter. A simple **.filter** on the loaded rows with the match to the status filter fixed the filtering of the CRs based on status.
 ### Task 3
-The approval timeline was sorted chronologically (oldest -> newest) by using a simple **.sort** function on the timeline array's audit **at** field.
+The approval timeline was sorted chronologically (oldest -> newest) by using a simple **.sort** function on a copy of the timeline array's audit **at** field.
 
 Approval of a CR was enabled in the **approve()** function that calls the mock api and passes the user , the id of the CR component and the time at approval. On success, the data is updated.
 
 Rejection of a CR was enabled in the **reject()** function that calls the mock api and passes the user , the id of the CR component and the time at approval and a rejection reason. On success, the data is updated.
 
-Rejection of a CR that is PENDING_APPROVAL is only enabled and approved if there was a **rejection reason** given to the text area using angular's **FormControl** to let it control the enabling of the Reject Button, and provide error through **action_error**. 
+Rejection of a CR that is PENDING_APPROVAL is only enabled if there was a **rejection reason** given to the text area using angular's **FormControl** to let it control the enabling of the Reject Button, and provide error through **action_error**. 
 
 
 ## 2. Component & state model
@@ -37,6 +37,7 @@ There are 5 view states in the application for all Change Requests namely: 'idle
 **The Change Request List:** contains a list of change requests for the selected user with status filter and the CR with details in shape of ID, Title, Status and Date. Initial state is of type *idle*
 **The Change Request Detail:** contains a detailed summary of the change request with proposed changes, timeline entries along with approval or rejection inputs
 
+Data flows from the mock api to the templates (.html) mainly through **load** functions in the component (.ts) files which are binded to elements in the templates
 ## 3. Invariants I keep
 
 <!-- Which properties the UI guarantees, and where in the component/template each is enforced. -->
@@ -55,18 +56,36 @@ There are 5 view states in the application for all Change Requests namely: 'idle
 - for testing if Loading UI shows , the latencyMS in the cr-api.service.ts was increased. **Successfully Showed Loading message**
 - for testing if error paragraph shows, the failNExt was set to true in the cr-api.service.ts. **Successfully showed red error message**
 
+### Component Tests
+#### Diff Tests (diff.spec.ts)
+- Test was added to confirm change is detected if price is only updated similar to the quantity only update test
+- Test was added to confirm no changes confirmed as unchanged 
+#### List Tests (cr-list.component.spec.ts)
+- Test was added to confirm status filter updates the table of CR List elements based on selected status 
+
+#### CR Detail Tests (cr-detail.component.spec.ts)
+- Test was added to confirm reject button and div is hidden for viewer users
+- Test was added to confirm reject button is enabled on adding input to reject reason text area input.
+- Test was added to confirm timeline entries are actually sorted from oldest to newest
+- Test was added to show error on unsuthorized user (different Organisation) from viewing the CR of one organisation.
+
+
 ## 5. Assumptions
 
 <!-- Where the requirements left room for interpretation, the calls you made and why. -->
 
 - **Task 3:** I assumed that only users that have approvePolicy permission can reject, therefore i added the same permission check in both **canApprove** and **canReject** functions.
 - I also assumed in **Task 3** that the date stored for approval or rejection timeline is to be stored in ISO string format.
+- In the detail component the details were only loading **onInit** and i assumed it needed to detect changes with **onChange** instead to bring the new selected detail.
 
 ## 6. Where I used AI
 
 - To understand what Angular's Form Control provides out of the box and how i could use it to retrieve the value from rejection reason text area to pass in the **reject()** function as well as validate the input.
-
+- **Task 5:** AI was used in **cr-detail.component.spec.ts** for test **timeline entries are sorted from oldest to newest** to figure out how to retrieve the dates of the entries from the span elements.
+AI was used to understand how to inform the test simulation on simulated **inputs and select changes** using **fixture.detectChanges()**
+- AI was used to fix the lack of selection of Detail to show by changing cr-detail.component.ts to use **ngOnChange**, instead of **ngOnInit**
 
 ## 7. What I'd improve with more time
 
--
+- implement refresh of data in the list on status change in the detail component
+- Add more tests for confirming api errors and loading

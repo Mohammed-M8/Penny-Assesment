@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CrApiService } from '../../api/cr-api.service';
@@ -20,19 +20,24 @@ import { canApprovePolicy } from '../../common/permissions';
 	imports: [CommonModule, ReactiveFormsModule],
 	templateUrl: './cr-detail.component.html',
 })
-export class CrDetailComponent implements OnInit {
+export class CrDetailComponent implements OnInit,OnChanges {
 	@Input() id!: string;
 
 	state: ViewState<CrDetail> = idle();
 	submitting = false;
 	actionError?: string;
 	// TODO: add validation so the form is invalid until a reason is entered.
-	rejectControl = new FormControl('', { nonNullable: true,validators:[Validators.required] });
+	rejectControl = new FormControl('', { nonNullable: true,validators:[Validators.required,(control)=>control.value.trim().length>0?null:{whitespace: true}] });
 
 	constructor(private readonly api: CrApiService, private readonly session: SessionService) {}
 
 	ngOnInit(): void {
+		void this.load()
+	}
+	ngOnChanges(): void {
+	if (this.state.status !== 'idle') {
 		void this.load();
+	}
 	}
 
 	async load(): Promise<void> {
@@ -57,9 +62,9 @@ export class CrDetailComponent implements OnInit {
 	/** Approval timeline, oldest-first. */
 	get timeline(): TimelineEntry[] {
 		// TODO: return the audit entries ordered chronologically (oldest first).
-		let timelineEntries=this.detail
+		let timelineEntries=this.detail?[...this.detail.audit].sort((a,b)=>new Date(a.at).getTime()-new Date(b.at).getTime()) :[]
 
-		return timelineEntries?.audit.sort((a,b)=>new Date(a.at).getTime()-new Date(b.at).getTime()) ?? [];
+		return timelineEntries
 	}
 
 	/** Whether the current user may approve the loaded CR. */
@@ -94,7 +99,7 @@ export class CrDetailComponent implements OnInit {
 		//       reflect the outcome in the view.
 		this.submitting=true
 		try {
-			if(this.rejectControl.value){
+			if(this.rejectControl.valid){
 				const updatedCR=await this.api.reject(this.session.user,this.id,new Date().toISOString(),this.rejectControl.value)
 				this.state={status:'loaded',data:updatedCR}
 			}else{

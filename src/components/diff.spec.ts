@@ -21,4 +21,12 @@ describe('computeDiff', () => {
 		const rows = computeDiff(base, [{ ...base[0], quantity: 11 }, base[1]]);
 		expect(rows.find((r) => r.sku === 'SKU-A')?.kind).toBe('changed');
 	});
+	it('detects a price-only change as changed', () => {
+		const rows = computeDiff(base, [{ ...base[0],unitPrice:1000 }, base[1]]);
+		expect(rows.find((r) => r.sku === 'SKU-A')?.kind).toBe('changed');
+	});
+	it('detects no change as unchanged', () => {
+		const rows = computeDiff(base, [{ ...base[0], quantity: 10 }, base[1]]);
+		expect(rows.find((r) => r.sku === 'SKU-A')?.kind).toBe('unchanged');
+	});
 });
